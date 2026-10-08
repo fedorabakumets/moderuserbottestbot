@@ -1,10 +1,12 @@
-import { table, integer, text } from 'sdk/db';
+/**
+ * @fileoverview Схема счётчиков для проверки постоянного хранилища Telegram.
+ */
+import { table, integer } from 'sdk/db';
 
-// Your database tables go here as named exports. Deploying this file registers the
-// schema; applying the changes (a migration) updates the database.
-
-// Uncomment to define your first table:
-// export const users = table('users', {
-//   id:   integer('id').primaryKey({ autoIncrement: true }),
-//   name: text('name').notNull(),
-// });
+/** Счётчики тестовых команд в личных чатах. */
+export const serverlessTestCounters = table('serverless_test_counters', {
+  /** Идентификатор чата, которому принадлежит счётчик. */
+  chatId: integer('chat_id').primaryKey(),
+  /** Число обработанных тестовых команд. */
+  seen: integer('seen').notNull().default(0),
+});
