@@ -1,10 +1,13 @@
 {
   "name": "moderuserbottestbot",
+  "type": "module",
   "private": true,
   "devDependencies": {
     "@tgcloud/cli": "^0.2.0"
   },
   "scripts": {
+    "test": "node --test tests/validation.test.js",
+    "test:cloud": "node tests/run-cloud.mjs",
     "deploy": "tgcloud push",
     "status": "tgcloud status",
     "run": "tgcloud run"

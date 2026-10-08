@@ -1,29 +1,28 @@
 /**
- * @fileoverview Обработчик проверки кода и базы данных Telegram Serverless.
+ * @fileoverview Обработчик команд и ответов анкеты бота знакомств «Котик».
  */
-import { api } from 'sdk';
-import { incrementCounter } from '../lib/counter.js';
+import { ensureProfile } from '../lib/profiles.js';
+import { acceptAnswer, promptStep } from '../lib/wizard.js';
+import { say, showMenu } from '../lib/ui.js';
+import { handleAdmin, isBanned } from '../lib/admin.js';
+import { routeCommand } from '../lib/commands.js';
 
 /**
- * Обрабатывает тестовую команду в личном чате.
+ * Выполняет команды либо сохраняет ответ на вопрос анкеты.
  * @param {object} message - Входящее сообщение Telegram.
- * @returns {Promise<object|undefined>} Результат теста или отсутствие действия.
+ * @returns {Promise<object|undefined>} Результат диалога или отсутствие действия.
  */
 export default async function handleMessage(message) {
-  if (message.chat?.type !== 'private') return;
-  const command = message.text?.trim().split(/\s+/)[0].split('@')[0];
-  if (command === '/start') {
-    await api.sendMessage({
-      chat_id: message.chat.id,
-      text: 'Тест Telegram Serverless. Отправь /serverless_test — проверим код и базу данных.',
-    });
+  if (message.chat?.type !== 'private' || !message.from || message.from.is_bot) return;
+  const command = (message.text?.trim().split(/\s+/)[0] || '').split('@')[0];
+  if (await handleAdmin(message, command)) return;
+  if (await isBanned(message.from.id)) return say(message.chat.id, 'Доступ к боту ограничен владельцем.');
+  const profile = await ensureProfile(message.from);
+  if (command.startsWith('/')) {
+    if (!await routeCommand(command, profile)) return say(message.chat.id, 'Неизвестная команда. Список: /help');
     return;
   }
-  if (command !== '/serverless_test') return;
-  const count = await incrementCounter(message.chat.id);
-  await api.sendMessage({
-    chat_id: message.chat.id,
-    text: `Telegram Serverless работает ✅\nСчётчик в базе: ${count}\nВерсия теста: 2`,
-  });
-  return { count, version: 2 };
+  if (profile.step === 'menu') return showMenu(profile);
+  if (profile.step === 'confirm' || profile.step === 'delete_confirm') return routeCommand('/menu', profile);
+  return acceptAnswer(profile, message);
 }
