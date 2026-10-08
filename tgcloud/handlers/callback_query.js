@@ -7,6 +7,7 @@ import { acceptAnswer, beginWizard, publishProfile } from '../lib/wizard.js';
 import { openMenu, showOwnProfile, toggleVisibility, askDelete, finishDelete, cancelWizard } from '../lib/actions.js';
 import { browseProfiles, decide } from '../lib/browse.js';
 import { showMatches, moderateMatch } from '../lib/matches.js';
+import { showIncomingLike } from '../lib/likes.js';
 import { say } from '../lib/ui.js';
 import { isBanned } from '../lib/admin.js';
 import { withCleanDialog } from '../lib/dialog.js';
@@ -37,6 +38,7 @@ async function processCallback(query) {
   if (['like', 'skip', 'block', 'report'].includes(action)) return decide(profile, action, Number(value), query.message.message_id);
   if (action === 'delete' && value) return finishDelete(profile, value === 'yes');
   if (action === 'matches') return showMatches(profile.userId);
+  if (action === 'incoming') return showIncomingLike(profile.userId);
   if (action === 'matchblock' || action === 'matchreport') return moderateMatch(profile.userId, Number(value), action === 'matchblock' ? 'block' : 'report');
   const actions = {
     menu: openMenu, mine: showOwnProfile, edit: beginWizard, publish: publishProfile,

@@ -10,6 +10,8 @@ import { findCandidate, claimCard, recordDecision, canInteract } from '../lib/da
 import { beginWizard, acceptAnswer, publishProfile } from '../lib/wizard.js';
 import { toggleVisibility, askDelete, finishDelete, cancelWizard } from '../lib/actions.js';
 import { STEPS } from '../lib/validation.js';
+import { getIncomingLikes, showIncomingLike } from '../lib/likes.js';
+import { showMatches } from '../lib/matches.js';
 
 let passed = 0;
 
@@ -63,7 +65,22 @@ export default async function verifyCloud() {
     check(await claimCard(actor, target, 7), 'Текущая карточка принимается');
     check(!await claimCard(actor, target, 7), 'Повторное нажатие отвергается');
     check(!await recordDecision(actor, target, 'like'), 'Односторонний лайк без совпадения');
+    check((await getIncomingLikes(target))[0]?.partner === actor, 'Односторонний лайк виден получателю');
+    check((await getIncomingLikes(actor)).length === 0, 'Исходящий лайк не попадает во входящие');
+    const inbox = await showMatches(target);
+    check(inbox.rows.some(row => row.some(item => item.callback_data === 'incoming')), 'Раздел симпатий предлагает входящий лайк');
+    await saveProfile(actor, { active: false });
+    check((await getIncomingLikes(target)).length === 0, 'Скрытая анкета не показывается во входящих');
+    await saveProfile(actor, { active: true });
+    await db.insert(bans).values({ userId: actor }).run();
+    check((await getIncomingLikes(target)).length === 0, 'Запрет владельца скрывает входящий лайк');
+    await db.delete(bans).where(eq(bans.userId, actor)).run();
+    await showIncomingLike(target);
+    const incomingCard = await getProfile(target);
+    check(incomingCard.candidate === actor && incomingCard.cardId === 7, 'Входящий лайк создаёт действующую карточку');
+    check(await claimCard(target, actor, 7), 'Карточка входящего лайка принимает ответ');
     check(await recordDecision(target, actor, 'like'), 'Создание взаимной симпатии');
+    check((await getIncomingLikes(target)).length === 0, 'Взаимный лайк исчезает из новых входящих');
     check(!await recordDecision(target, actor, 'like'), 'Взаимная симпатия не дублируется');
     await recordDecision(target, actor, 'block');
     check(!await canInteract(actor, target), 'Блокировка заменяет лайк после совпадения');

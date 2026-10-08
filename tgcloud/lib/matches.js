@@ -6,6 +6,7 @@ import { sql } from 'sdk/db';
 import { getProfile } from './profiles.js';
 import { canInteract, recordDecision } from './dating.js';
 import { say, button } from './ui.js';
+import { getIncomingLikes } from './likes.js';
 
 /**
  * Формирует кнопку контакта только после взаимной симпатии.
@@ -35,11 +36,12 @@ export async function notifyMatch(first, second) {
 }
 
 /**
- * Показывает до двадцати последних взаимных симпатий без заблокированных людей.
+ * Показывает входящие лайки и до двадцати последних взаимных симпатий.
  * @param {number} userId - Идентификатор пользователя.
  * @returns {Promise<object>} Сообщение со списком контактов.
  */
 export async function showMatches(userId) {
+  const incoming = await getIncomingLikes(userId);
   const rows = await db.all(sql`SELECT CASE WHEN first_id = ${userId} THEN second_id ELSE first_id END AS partner
     FROM dating_matches WHERE first_id = ${userId} OR second_id = ${userId} ORDER BY rowid DESC LIMIT 20`);
   const buttons = [];
@@ -50,8 +52,10 @@ export async function showMatches(userId) {
       buttons.push([button('🚫 Блок', `matchblock:${row.partner}`), button('⚠️ Жалоба', `matchreport:${row.partner}`)]);
     }
   }
-  return say(userId, buttons.length ? '💕 Твои взаимные симпатии:' : 'Пока нет взаимных симпатий.',
-    [...buttons, [button('🏠 Меню', 'menu')]]);
+  const text = `💌 Новые входящие симпатии: ${incoming.length}.\n\n`
+    + (buttons.length ? '💕 Твои взаимные симпатии:' : 'Пока нет взаимных симпатий.');
+  const inbox = incoming.length ? [[button(`💌 Кто меня лайкнул (${incoming.length})`, 'incoming')]] : [];
+  return say(userId, text, [...inbox, ...buttons, [button('🏠 Меню', 'menu')]]);
 }
 
 /**
