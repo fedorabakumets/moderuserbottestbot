@@ -35,6 +35,13 @@ try {
   const result = await runFunction(token, 'handlers/message', sources, {}, {});
   for (const line of result.log || []) console.log(line.m);
   console.log(JSON.stringify({ ...result.result, seconds: result.time }));
+  sources['handlers/message'] = fs.readFileSync(path.join(root, 'tests/cloud-dialog.js'), 'utf8');
+  sources['lib/cleanup-api'] = fs.readFileSync(path.join(root, 'tests/cleanup-api.js'), 'utf8');
+  sources['lib/dialog'] = sources['lib/dialog'].replace("import { api, db } from 'sdk';",
+    "import { db } from 'sdk'; import { api } from './cleanup-api.js';");
+  const dialogResult = await runFunction(token, 'handlers/message', sources, {}, {});
+  for (const line of dialogResult.log || []) console.log(line.m);
+  console.log(JSON.stringify({ ...dialogResult.result, seconds: dialogResult.time }));
 } catch (error) {
   console.error(error.description || error.message);
   if (error.parameters) console.error(JSON.stringify(error.parameters));

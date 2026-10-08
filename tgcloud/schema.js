@@ -86,3 +86,13 @@ export const bans = table('dating_bans', {
   /** Идентификатор заблокированного пользователя. */
   userId: integer('user_id').primaryKey(),
 });
+
+/** Сообщения текущего шага диалога для последующей очистки. */
+export const dialogMessages = table('dating_dialog_messages', {
+  /** Уникальная пара чата и сообщения. */
+  key: text('key').primaryKey(),
+  /** Идентификатор личного чата. */
+  chatId: integer('chat_id').notNull(),
+  /** Идентификатор сообщения бота. */
+  messageId: integer('message_id').notNull(),
+});

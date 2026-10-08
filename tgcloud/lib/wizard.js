@@ -60,9 +60,15 @@ export async function acceptAnswer(profile, message, keep = false) {
   const index = STEPS.indexOf(profile.step);
   if (index < 0) return promptStep(profile);
   const field = profile.step === 'media' ? 'mediaId' : profile.step;
-  if (keep && !profile.draft[field]) return say(profile.userId, 'Сначала заполни это поле.');
+  if (keep && !profile.draft[field]) {
+    await say(profile.userId, 'Сначала заполни это поле.');
+    return promptStep(profile);
+  }
   const parsed = keep ? {} : parseField(profile.step, message);
-  if (parsed.error) return say(profile.userId, parsed.error);
+  if (parsed.error) {
+    await say(profile.userId, parsed.error);
+    return promptStep(profile);
+  }
   const draft = { ...profile.draft, ...parsed };
   const step = STEPS[index + 1] || 'confirm';
   await saveProfile(profile.userId, { step, draft });

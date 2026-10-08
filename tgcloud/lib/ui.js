@@ -2,6 +2,7 @@
  * @fileoverview Клавиатуры, сообщения и отображение медиаанкет.
  */
 import { api } from 'sdk';
+import { rememberMessage } from './dialog.js';
 
 /**
  * Создаёт inline-кнопку.
@@ -19,7 +20,8 @@ export function button(text, data) { return { text, callback_data: data }; }
  * @returns {Promise<object>} Отправленное сообщение.
  */
 export async function say(chatId, text, rows = []) {
-  return api.sendMessage({ chat_id: chatId, text, reply_markup: { inline_keyboard: rows } });
+  const message = await api.sendMessage({ chat_id: chatId, text, reply_markup: { inline_keyboard: rows } });
+  return rememberMessage(chatId, message);
 }
 
 /**
@@ -46,7 +48,8 @@ export async function showMenu(profile) {
 export async function showCard(chatId, profile, rows = []) {
   const caption = `🐱 ${profile.name}, ${profile.age}, ${profile.city}\n${profile.bio || 'Без описания'}`;
   const payload = { chat_id: chatId, caption, reply_markup: { inline_keyboard: rows } };
-  return profile.mediaType === 'video'
+  const message = await (profile.mediaType === 'video'
     ? api.sendVideo({ ...payload, video: profile.mediaId })
-    : api.sendPhoto({ ...payload, photo: profile.mediaId });
+    : api.sendPhoto({ ...payload, photo: profile.mediaId }));
+  return rememberMessage(chatId, message);
 }

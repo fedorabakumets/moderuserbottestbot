@@ -2,10 +2,11 @@
  * @fileoverview Обработчик команд и ответов анкеты бота знакомств «Котик».
  */
 import { ensureProfile } from '../lib/profiles.js';
-import { acceptAnswer, promptStep } from '../lib/wizard.js';
+import { acceptAnswer } from '../lib/wizard.js';
 import { say, showMenu } from '../lib/ui.js';
 import { handleAdmin, isBanned } from '../lib/admin.js';
 import { routeCommand } from '../lib/commands.js';
+import { withCleanDialog } from '../lib/dialog.js';
 
 /**
  * Выполняет команды либо сохраняет ответ на вопрос анкеты.
@@ -14,6 +15,15 @@ import { routeCommand } from '../lib/commands.js';
  */
 export default async function handleMessage(message) {
   if (message.chat?.type !== 'private' || !message.from || message.from.is_bot) return;
+  return withCleanDialog(message.chat.id, message.message_id, () => processMessage(message));
+}
+
+/**
+ * Выполняет логику сообщения до удаления предыдущего шага.
+ * @param {object} message - Сообщение пользователя.
+ * @returns {Promise<object|undefined>} Следующий шаг диалога.
+ */
+async function processMessage(message) {
   const command = (message.text?.trim().split(/\s+/)[0] || '').split('@')[0];
   if (await handleAdmin(message, command)) return;
   if (await isBanned(message.from.id)) return say(message.chat.id, 'Доступ к боту ограничен владельцем.');

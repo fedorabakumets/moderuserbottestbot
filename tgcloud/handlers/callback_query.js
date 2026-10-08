@@ -9,6 +9,7 @@ import { browseProfiles, decide } from '../lib/browse.js';
 import { showMatches, moderateMatch } from '../lib/matches.js';
 import { say } from '../lib/ui.js';
 import { isBanned } from '../lib/admin.js';
+import { withCleanDialog } from '../lib/dialog.js';
 
 /**
  * Обрабатывает действие текущего пользователя в личном чате.
@@ -18,6 +19,15 @@ import { isBanned } from '../lib/admin.js';
 export default async function handleCallback(query) {
   if (query.message?.chat?.type !== 'private' || query.message.chat.id !== query.from?.id) return;
   await api.answerCallbackQuery({ callback_query_id: query.id });
+  return withCleanDialog(query.from.id, query.message.message_id, () => processCallback(query));
+}
+
+/**
+ * Выполняет действие кнопки до очистки предыдущего шага.
+ * @param {object} query - Callback-запрос Telegram.
+ * @returns {Promise<object|undefined>} Следующий шаг диалога.
+ */
+async function processCallback(query) {
   if (await isBanned(query.from.id)) return say(query.from.id, 'Доступ к боту ограничен владельцем.');
   const profile = await getProfile(query.from.id);
   if (!profile) return say(query.from.id, 'Анкета удалена. Для новой отправь /start.');
