@@ -30,7 +30,8 @@ export async function handleAdmin(message, command) {
   if (message.from.id !== OWNER_ID) { await say(message.chat.id, 'Команда доступна владельцу бота.'); return true; }
   if (command === '/setup') {
     await api.setMyName({ name: 'Котик 🐱 • знакомства' });
-    await api.setMyDescription({ description: '🐱 Знакомства для взрослых: создай анкету, найди людей из своего города и получи взаимную симпатию. Фото, видео и личные предпочтения. Telegram Serverless.' });
+    await api.setMyDescription({ description: '🐱 Знакомства для взрослых: создай анкету, найди людей из своего города и получи взаимную симпатию. Фото, видео и личные предпочтения. Telegram Serverless.\n\nИсходный код: https://github.com/fedorabakumets/moderuserbottestbot' });
+    await api.setMyShortDescription({ short_description: '🐱 Знакомства 18+ • Код: https://github.com/fedorabakumets/moderuserbottestbot' });
     await api.setMyCommands({ commands: [
       { command: 'start', description: 'Начать или продолжить анкету' },
       { command: 'menu', description: 'Главное меню' },
