@@ -5,7 +5,11 @@
 -->
 # Котик 🐱 — знакомства на Telegram Serverless
 
-Бот [@moderuserbottestbot](https://t.me/moderuserbottestbot), работающий без отдельного сервера. Сценарий анкеты основан на шаблоне «Котик» из локального Telegram Bot Builder; реализация написана для SDK Telegram Serverless.
+Бот [@KotikVstrechiBot](https://t.me/KotikVstrechiBot), работающий без отдельного сервера. Сценарий анкеты основан на шаблоне «Котик» из локального Telegram Bot Builder; реализация написана для SDK Telegram Serverless.
+
+![Аватар Котика](assets/kotik-avatar.jpg)
+
+Аватар сгенерирован с помощью встроенного imagegen. Исходное изображение, версия для Telegram и промпт находятся в `assets/`.
 
 ## Команды бота
 
