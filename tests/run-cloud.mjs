@@ -42,6 +42,10 @@ try {
   const dialogResult = await runFunction(token, 'handlers/message', sources, {}, {});
   for (const line of dialogResult.log || []) console.log(line.m);
   console.log(JSON.stringify({ ...dialogResult.result, seconds: dialogResult.time }));
+  sources['handlers/message'] = fs.readFileSync(path.join(root, 'tests/cloud-notifications.js'), 'utf8');
+  const notifications = await runFunction(token, 'handlers/message', sources, {}, {});
+  for (const line of notifications.log || []) console.log(line.m);
+  console.log(JSON.stringify({ ...notifications.result, seconds: notifications.time }));
 } catch (error) {
   console.error(error.description || error.message);
   if (error.parameters) console.error(JSON.stringify(error.parameters));

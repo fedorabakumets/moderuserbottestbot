@@ -63,14 +63,29 @@ export async function claimCard(actor, target, messageId) {
  * @returns {Promise<boolean>} Создана новая взаимная симпатия.
  */
 export async function recordDecision(actor, target, action) {
+  return (await recordDecisionWithStatus(actor, target, action)).matched;
+}
+
+/**
+ * Сохраняет решение и отличает новый лайк от повторной обработки.
+ * @param {number} actor - Автор решения.
+ * @param {number} target - Получатель решения.
+ * @param {string} action - Решение пользователя.
+ * @returns {Promise<{inserted: boolean, matched: boolean}>} Новая запись и новая взаимная симпатия.
+ */
+export async function recordDecisionWithStatus(actor, target, action) {
   const insert = db.insert(decisions).values({ pair: `${actor}:${target}`, actor, target, action });
+  let inserted = false;
   if (action === 'block' || action === 'report') {
     await insert.onConflictDoUpdate({ target: decisions.pair, set: { action } }).run();
-  } else await insert.onConflictDoNothing({ target: decisions.pair }).run();
+  } else {
+    const rows = await insert.onConflictDoNothing({ target: decisions.pair }).returning().run();
+    inserted = rows.length === 1;
+  }
   if (action === 'report') await db.insert(reports)
     .values({ pair: `${actor}:${target}`, actor, target, created: Date.now() })
     .onConflictDoNothing({ target: reports.pair }).run();
-  if (action !== 'like') return false;
+  if (action !== 'like') return { inserted, matched: false };
   const first = Math.min(actor, target), second = Math.max(actor, target);
   const result = await db.run(sql`INSERT INTO dating_matches (pair, first_id, second_id)
     SELECT ${`${first}:${second}`}, ${first}, ${second}
@@ -80,5 +95,5 @@ export async function recordDecision(actor, target, action) {
       ((actor = ${actor} AND target = ${target}) OR (actor = ${target} AND target = ${actor}))
       AND action IN ('block', 'report'))
     ON CONFLICT(pair) DO NOTHING RETURNING pair`);
-  return result.rows.length === 1;
+  return { inserted, matched: result.rows.length === 1 };
 }

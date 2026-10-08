@@ -1,10 +1,10 @@
 /**
  * @fileoverview Показ чужих анкет и обработка кнопок поиска.
  */
-import { findCandidate, canInteract, claimCard, recordDecision } from './dating.js';
+import { findCandidate, canInteract, claimCard, recordDecisionWithStatus } from './dating.js';
 import { getProfile, saveProfile } from './profiles.js';
 import { say, showCard, button } from './ui.js';
-import { notifyMatch } from './matches.js';
+import { notifyDecision } from './notifications.js';
 import { isComplete } from './validation.js';
 
 /**
@@ -47,8 +47,8 @@ export async function decide(viewer, action, target, messageId) {
   if (!candidate?.active || candidate.step !== 'menu' || !await canInteract(viewer.userId, target)) {
     return browseProfiles(await getProfile(viewer.userId));
   }
-  const matched = await recordDecision(viewer.userId, target, action);
-  if (matched) await notifyMatch(viewer, candidate);
+  const decision = await recordDecisionWithStatus(viewer.userId, target, action);
+  await notifyDecision(viewer, candidate, decision, action);
   if (action === 'block' || action === 'report') await say(viewer.userId,
     action === 'report' ? 'Жалоба сохранена для владельца бота. Пользователь заблокирован для тебя.' : 'Пользователь заблокирован для тебя.');
   return browseProfiles(await getProfile(viewer.userId));
